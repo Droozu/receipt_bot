@@ -141,7 +141,7 @@ class ItemsParser:
 
         line = line.replace("I", "1")
         line = line.replace("l", "1")
-
+        line = line.replace("_", " ")
         line = line.replace("B", "8")
 
         line = line.replace(",", ".")
@@ -167,8 +167,8 @@ class ItemsParser:
 
     def _cleanup_name(self, name: str) -> str:
 
-        # remove product code at beginning
-        name = re.sub(r"^\d{5,}\s+", "", name)
+        # remove product code
+        name = re.sub(r"^\^?\d{5,}\s+", "", name)
 
         name = re.sub(r"^\d+[.)]?\s*", "", name)
 
