@@ -1,0 +1,22 @@
+{
+  "sample_id": "342bb685bf17498e899b8bcc9bbef1da",
+  "corrected_data": {
+    "store_name": "Пятёрочка",
+    "legal_name": "ООО \"Агроторг\"",
+    "datetime": "2018-12-02T17:40",
+    "items": [
+      {
+        "name": "К.Ц. Молоко ультрапастеризованное 1.5% 970мл",
+        "quantity": 1,
+        "price": 49.99
+      },
+      {
+        "name": "Любимый напиток яблоко вишня черноплодная 1.93л",
+        "quantity": 1,
+        "price": 82.99
+      }
+    ]
+  },
+  "notes": "fixed item names",
+  "updated_at": "2026-03-07T10:58:08.437052+00:00"
+}

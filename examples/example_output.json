@@ -1,0 +1,19 @@
+{
+  "store_name": "Пятёрочка",
+  "legal_name": "ООО \"Агроторг\"",
+  "datetime": "2018-12-02T17:40",
+  "items": [
+    {"name": "К.Ц. Молоко ультрапастеризованное 1.5% 970мл", "quantity": 1, "price": 49.99, "line_confidence": 0.84},
+    {"name": "Любимый напиток яблоко вишня черноплодная 1.93л", "quantity": 1, "price": 82.99, "line_confidence": 0.84},
+    {"name": "Томат сливовидный 600г", "quantity": 1, "price": 139.99, "line_confidence": 0.92},
+    {"name": "Любимый напиток апельсин манго 1.93л", "quantity": 1, "price": 82.99, "line_confidence": 0.84},
+    {"name": "PICNIC Батончик BIG 76г", "quantity": 1, "price": 42.80, "line_confidence": 0.92},
+    {"name": "PICNIC Батончик BIG 76г", "quantity": 1, "price": 42.80, "line_confidence": 0.92},
+    {"name": "Ряба Майонез Провансаль 67% 400г", "quantity": 1, "price": 64.00, "line_confidence": 0.84},
+    {"name": "К.Ц. Молоко ультрапастеризованное 1.5% 970мл", "quantity": 1, "price": 49.99, "line_confidence": 0.84}
+  ],
+  "total": 555.55,
+  "inn": "7825706086",
+  "confidence": 0.88,
+  "raw_text": "..."
+}
