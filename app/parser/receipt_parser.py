@@ -13,12 +13,6 @@ from app.parser.items_parser import ItemsParser, ParsedItem
 from app.parser.patterns import DATE_PATTERNS, INN_PATTERN, LEGAL_ENTITY_PATTERNS, LearnedPatterns, TOTAL_PATTERN
 
 
-# Добавить в список исключений:
-TABLE_HEADER_TOKENS = {
-    "ЦЕНА", "СКИДКА", "КОЛ-ВО", "ИТОГО", "НДС", "НАС",
-    "СКИДКОЙ", "СУММА", "ТОВАР", "КОЛИЧЕСТВО",
-}
-
 @dataclass(slots=True)
 class ReceiptData:
     store_name: str | None

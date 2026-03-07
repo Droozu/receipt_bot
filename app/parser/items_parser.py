@@ -19,12 +19,13 @@ class ParsedItem:
 class ItemsParser:
     def __init__(self, config: ParserConfig) -> None:
         self.config = config
+    
         self.qty_price_inline = re.compile(
-            r"(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})\s*[*xх]\s*(?P<qty>\d+[.,]?\d*)\s*[=:]?\s*(?P<total>\d+[.,]\d{2})?$",
+            r"(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})\s*[*xх4]\s*(?P<qty>\d+[.,]?\d*)\s*[=:]?\s*(?P<total>\d+[.,]\d{2})?",
             re.IGNORECASE,
         )
         self.two_line_value = re.compile(
-            r"(?P<price>\d+[.,]\d{2})\s*[*xх]\s*(?P<qty>\d+[.,]?\d*)\s*(?P<total>\d+[.,]\d{2})?$",
+            r"(?P<price>\d+[.,]\d{2})\s*[*xх4]\s*(?P<qty>\d+[.,]?\d*)\s*(?P<total>\d+[.,]\d{2})?",
             re.IGNORECASE,
         )
 
