@@ -91,6 +91,7 @@ class ItemsParser:
             if i + 1 < len(cleaned):
                 maybe_name = line
                 maybe_values = cleaned[i + 1]
+                maybe_values = re.sub(r"(\d+[.,]\d{2})\s+\1", r"\1", maybe_values)
                 match = self.two_line_value.search(maybe_values)
             if match and self._looks_like_name(maybe_name):
 
