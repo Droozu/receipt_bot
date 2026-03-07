@@ -62,7 +62,7 @@ PYTHONPATH=. python -m app.main parse /path/to/receipt.jpg --output-dir outputs
 
 ```bash
 PYTHONPATH=. python -m app.main feedback <sample_id> corrected.json --notes "fixed item names"
-```python -m app.main feedback 1a23f1d3dfdb4e199288b5cfb131cbac example_corrected.json --notes "fixed item names"
+```
 
 ### Retrain patterns
 

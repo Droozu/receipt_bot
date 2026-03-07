@@ -2,5 +2,5 @@ opencv-python>=4.9.0
 numpy>=1.26.0
 pytesseract>=0.3.10
 Pillow>=10.0.0
-# Optional alternative backend
-# easyocr>=1.7.1
+pdf2image>=1.17.0      # для поддержки PDF (требование ТЗ)
+easyocr>=1.7.1         # альтернативный OCR бэкенд (убрать из комментария)  

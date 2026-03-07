@@ -19,8 +19,17 @@ class ReceiptPreprocessor:
         self.use_perspective_fix = use_perspective_fix
 
     def load_image(self, file_path: str | Path) -> np.ndarray:
-        file_path = str(file_path)
-        image = cv2.imread(file_path)
+        file_path = Path(file_path)
+        if file_path.suffix.lower() == ".pdf":
+            from pdf2image import convert_from_path
+            pages = convert_from_path(str(file_path), dpi=300)
+            if not pages:
+                raise ValueError(f"PDF is empty: {file_path}")
+            # Берём первую страницу, конвертируем в numpy array
+            import numpy as np
+            image = np.array(pages[0])
+            return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        image = cv2.imread(str(file_path))
         if image is None:
             raise FileNotFoundError(f"Unable to read image: {file_path}")
         return image

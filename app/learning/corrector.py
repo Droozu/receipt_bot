@@ -29,21 +29,13 @@ DICTIONARY = get_dictionary()
 
 
 def correct_word(word: str) -> str:
-    """
-    Fix OCR mistakes using learned dictionary
-    """
-
     if not DICTIONARY:
-        return word
-
-    word = word.upper()
-
-    matches = get_close_matches(word, DICTIONARY, n=1, cutoff=0.8)
-
+        return word                # ранний выход без изменений
+    upper = word.upper()
+    matches = get_close_matches(upper, DICTIONARY, n=1, cutoff=0.8)
     if matches:
         return matches[0]
-
-    return word
+    return word                   # возвращаем оригинал, не upper
 
 
 def correct_text(text: str) -> str:

@@ -13,6 +13,12 @@ from app.parser.items_parser import ItemsParser, ParsedItem
 from app.parser.patterns import DATE_PATTERNS, INN_PATTERN, LEGAL_ENTITY_PATTERNS, LearnedPatterns, TOTAL_PATTERN
 
 
+# Добавить в список исключений:
+TABLE_HEADER_TOKENS = {
+    "ЦЕНА", "СКИДКА", "КОЛ-ВО", "ИТОГО", "НДС", "НАС",
+    "СКИДКОЙ", "СУММА", "ТОВАР", "КОЛИЧЕСТВО",
+}
+
 @dataclass(slots=True)
 class ReceiptData:
     store_name: str | None
@@ -60,6 +66,12 @@ class ReceiptParser:
             fixed = re.sub(rf"\b{re.escape(wrong)}\b", correct, fixed, flags=re.IGNORECASE)
         return fixed
 
+    # Добавить в список исключений:
+    TABLE_HEADER_TOKENS = {
+        "ЦЕНА", "СКИДКА", "КОЛ-ВО", "ИТОГО", "НДС", "НАС",
+        "СКИДКОЙ", "СУММА", "ТОВАР", "КОЛИЧЕСТВО",
+    }
+
     def _extract_store_name(self, lines: list[str]) -> str | None:
         header = lines[:8]
         candidates: list[str] = []
@@ -67,7 +79,12 @@ class ReceiptParser:
             norm = re.sub(r"[^\wА-Яа-яЁё\s\-\"']", " ", line).strip()
             if len(norm) < 3:
                 continue
-            if any(x in norm.upper() for x in ["КАССОВ", "ЧЕК", "ИНН", "ООО", "АО", "ИП"]):
+            upper_tokens = set(norm.upper().split())
+            # Фильтруем служебные строки
+            if any(x in norm.upper() for x in ["КАССОВ", "ЧЕК", "ИНН", "ООО", "АО ", "ИП "]):
+                continue
+            # Фильтруем строки с токенами заголовка таблицы
+            if upper_tokens & TABLE_HEADER_TOKENS:
                 continue
             candidates.append(norm)
         if not candidates:
@@ -75,8 +92,16 @@ class ReceiptParser:
         best = max(candidates, key=lambda s: (sum(ch.isalpha() for ch in s), -len(s.split())))
         return self.learned.store_aliases.get(best.upper(), best)
 
+
     def _extract_legal_name(self, lines: list[str]) -> str | None:
+        # Сначала проверяем шапку (приоритет)
         for line in lines[:20]:
+            for pattern in LEGAL_ENTITY_PATTERNS:
+                match = pattern.search(line)
+                if match:
+                    return match.group(0).strip()
+        # Затем хвост чека — там часто реквизиты
+        for line in lines[20:]:
             for pattern in LEGAL_ENTITY_PATTERNS:
                 match = pattern.search(line)
                 if match:

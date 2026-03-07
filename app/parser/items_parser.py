@@ -39,21 +39,6 @@ class ItemsParser:
 
         return False
     
-    def _dictionary_score(self, name: str) -> float:
-
-        try:
-            from app.learning.corrector import DICTIONARY
-        except:
-            return 0.0
-
-        tokens = name.upper().split()
-
-        if not tokens:
-            return 0.0
-
-        hits = sum(1 for t in tokens if t in DICTIONARY)
-
-        return hits / len(tokens)
     
     def parse(self, lines: list[str]) -> list[ParsedItem]:
         cleaned = [self._normalize_line(line) for line in lines if line.strip()]
@@ -88,11 +73,14 @@ class ItemsParser:
                 )
                 i += 1
                 continue
+
+            match = None
+            maybe_name = line
             if i + 1 < len(cleaned):
-                maybe_name = line
                 maybe_values = cleaned[i + 1]
                 maybe_values = re.sub(r"(\d+[.,]\d{2})\s+\1", r"\1", maybe_values)
                 match = self.two_line_value.search(maybe_values)
+                
             if match and self._looks_like_name(maybe_name):
 
                 if name_buffer:
@@ -132,24 +120,22 @@ class ItemsParser:
         return self._deduplicate(items)
 
     def _normalize_line(self, line: str) -> str:
-
+        # Безопасные замены — не трогают буквы в словах
         line = line.replace("=", " ")
         line = line.replace("|", " ")
-
-        # OCR noise correction
-        line = line.replace("О", "0")
-        line = line.replace("O", "0")
-
-        line = line.replace("I", "1")
-        line = line.replace("l", "1")
         line = line.replace("_", " ")
-        line = line.replace("B", "8")
-
+        line = line.replace("—", "-")
         line = line.replace(",", ".")
-
         line = re.sub(r"\s+", " ", line)
-
         return line.strip()
+
+    def _normalize_numeric(self, value: str) -> str:
+        """Применяется только к уже извлечённому числовому токену."""
+        value = value.replace("О", "0").replace("O", "0")
+        value = value.replace("I", "1").replace("l", "1")
+        value = value.replace("B", "8")
+        value = value.replace(",", ".")
+        return value
 
     def _looks_like_service_line(self, line: str) -> bool:
         upper = line.upper()
@@ -170,7 +156,6 @@ class ItemsParser:
 
         # remove product code
         name = re.sub(r"^\^?\d{5,}\s+", "", name)
-
         name = re.sub(r"^\d+[.)]?\s*", "", name)
 
         name = re.sub(r"\s+", " ", name)
@@ -182,7 +167,7 @@ class ItemsParser:
         return name
 
     def _to_float(self, value: str) -> float:
-        return float(value.replace(",", "."))
+        return float(self._normalize_numeric(value))
 
     def _deduplicate(self, items: list[ParsedItem]) -> list[ParsedItem]:
         result: list[ParsedItem] = []

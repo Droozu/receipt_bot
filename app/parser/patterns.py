@@ -21,6 +21,7 @@ QTY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+
 @dataclass(slots=True)
 class LearnedPatterns:
     dictionary: set[str] = field(default_factory=set)

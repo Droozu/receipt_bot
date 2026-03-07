@@ -50,15 +50,21 @@ class PatternTrainer:
         learned.save(self.model_path)
         return learned
 
-    def _learn_token_corrections(self, ocr_text: str, corrected_text: str, votes: dict[str, Counter[str]]) -> None:
+    def _learn_token_corrections(self, ocr_text: str, corrected_text: str, votes: dict) -> None:
         ocr_tokens = [t.upper() for t in self._tokenize(ocr_text) if len(t) >= 4]
         corrected_tokens = [t.upper() for t in self._tokenize(corrected_text) if len(t) >= 4]
         corrected_set = set(corrected_tokens)
         for token in ocr_tokens:
             if token in corrected_set:
                 continue
+            # Пропускаем числовые токены — цены не исправляем через словарь
+            if re.match(r"^\d+[.,]?\d*$", token):
+                continue
             nearest = self._find_nearest(token, corrected_set)
             if nearest:
+                # Также не добавляем если nearest — число
+                if re.match(r"^\d+[.,]?\d*$", nearest):
+                    continue
                 votes[token][nearest] += 1
 
     def _find_nearest(self, token: str, candidates: set[str]) -> str | None:
