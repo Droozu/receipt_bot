@@ -70,6 +70,20 @@ PYTHONPATH=. python -m app.main feedback <sample_id> corrected.json --notes "fix
 PYTHONPATH=. python -m app.main train
 ```
 
+# 1. Принудительно сохранить sample
+```bash
+PYTHONPATH=. python -m app.main save /path/to/receipt.jpg
+```
+
+# 2. Получите sample_id в выводе, затем feedback как обычно
+```bash
+PYTHONPATH=. python -m app.main feedback <sample_id> example_corrected.json --notes "manual correction"
+```
+# 3. Переобучить
+```bash
+PYTHONPATH=. python -m app.main train
+```
+
 ## Example correction JSON
 
 ```json

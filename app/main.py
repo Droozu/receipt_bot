@@ -24,6 +24,13 @@ def build_services():
     feedback = FeedbackManager(dataset)
     return config, dataset, trainer, parser, ocr, feedback
 
+def command_save(args: argparse.Namespace) -> int:
+    config, dataset, _trainer, parser, ocr, _feedback = build_services()
+    ocr_result = ocr.recognize(args.input)
+    receipt = parser.parse(ocr_result)
+    sample_id = dataset.save_sample(args.input, ocr_result.text, receipt, receipt.confidence)
+    print(f"Sample saved: {sample_id}")
+    return 0
 
 def command_parse(args: argparse.Namespace) -> int:
     config, dataset, _trainer, parser, ocr, _feedback = build_services()
@@ -42,14 +49,12 @@ def command_parse(args: argparse.Namespace) -> int:
         print(f"Low confidence sample saved: {sample_id}")
     return 0
 
-
 def command_feedback(args: argparse.Namespace) -> int:
     _config, _dataset, _trainer, _parser, _ocr, feedback = build_services()
     corrected = json.loads(Path(args.corrected_json).read_text(encoding="utf-8"))
     path = feedback.submit(args.sample_id, corrected, notes=args.notes)
     print(f"Correction saved to: {path}")
     return 0
-
 
 def command_train(_: argparse.Namespace) -> int:
     _config, _dataset, trainer, _parser, _ocr, _feedback = build_services()
@@ -60,7 +65,6 @@ def command_train(_: argparse.Namespace) -> int:
     print(f"Store aliases: {len(learned.store_aliases)}")
     return 0
 
-
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Self-learning receipt parser bot")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -69,6 +73,10 @@ def make_parser() -> argparse.ArgumentParser:
     parse_cmd.add_argument("input", help="Path to receipt image")
     parse_cmd.add_argument("--output-dir", default="outputs", help="Directory for JSON and CSV outputs")
     parse_cmd.set_defaults(func=command_parse)
+
+    save_cmd = sub.add_parser("save", help="Save receipt data")
+    save_cmd.add_argument("input", help="Path to receipt image")
+    save_cmd.set_defaults(func=command_save)
 
     feedback_cmd = sub.add_parser("feedback", help="Submit corrected data for low-confidence sample")
     feedback_cmd.add_argument("sample_id", help="Sample ID returned by parse command")
@@ -80,12 +88,10 @@ def make_parser() -> argparse.ArgumentParser:
     train_cmd.set_defaults(func=command_train)
     return parser
 
-
 def main() -> int:
     parser = make_parser()
     args = parser.parse_args()
     return args.func(args)
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

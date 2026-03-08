@@ -13,7 +13,6 @@ class PreprocessResult:
     image: np.ndarray
     metadata: dict[str, Any]
 
-
 class ReceiptPreprocessor:
     def __init__(self, use_perspective_fix: bool = True) -> None:
         self.use_perspective_fix = use_perspective_fix
@@ -63,7 +62,12 @@ class ReceiptPreprocessor:
 
     def _boost_contrast(self, gray: np.ndarray) -> np.ndarray:
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        return clahe.apply(gray)
+        enhanced = clahe.apply(gray)
+        # Если фон тёмный — инвертировать
+        mean_brightness = np.mean(enhanced)
+        if mean_brightness < 127:
+            enhanced = cv2.bitwise_not(enhanced)
+        return enhanced
 
     def _adaptive_threshold(self, gray: np.ndarray) -> np.ndarray:
         return cv2.adaptiveThreshold(
@@ -152,3 +156,5 @@ class ReceiptPreprocessor:
         rect[1] = pts[np.argmin(diff)]
         rect[3] = pts[np.argmax(diff)]
         return rect
+
+

@@ -32,7 +32,7 @@ def correct_word(word: str) -> str:
     if not DICTIONARY:
         return word                # ранний выход без изменений
     upper = word.upper()
-    matches = get_close_matches(upper, DICTIONARY, n=1, cutoff=0.8)
+    matches = get_close_matches(upper, DICTIONARY, n=1, cutoff=0.65)
     if matches:
         return matches[0]
     return word                   # возвращаем оригинал, не upper

@@ -13,6 +13,11 @@ from app.parser.items_parser import ItemsParser, ParsedItem
 from app.parser.patterns import DATE_PATTERNS, INN_PATTERN, LEGAL_ENTITY_PATTERNS, LearnedPatterns, TOTAL_PATTERN
 
 
+TABLE_HEADER_TOKENS = {
+        "ЦЕНА", "СКИДКА", "КОЛ-ВО", "ИТОГО", "НДС", "НАС",
+        "СКИДКОЙ", "СУММА", "ТОВАР", "КОЛИЧЕСТВО",
+    }
+
 @dataclass(slots=True)
 class ReceiptData:
     store_name: str | None
@@ -28,8 +33,8 @@ class ReceiptData:
 class ReceiptParser:
     def __init__(self, config: ParserConfig, model_path: str | Path | None = None) -> None:
         self.config = config
-        self.items_parser = ItemsParser(config)
         self.learned = LearnedPatterns.load(model_path) if model_path else LearnedPatterns()
+        self.items_parser = ItemsParser(config, self.learned)
 
     def parse(self, ocr: OCRResult) -> ReceiptData:
         corrected_lines = [self._apply_corrections(line) for line in ocr.lines]
@@ -60,11 +65,6 @@ class ReceiptParser:
             fixed = re.sub(rf"\b{re.escape(wrong)}\b", correct, fixed, flags=re.IGNORECASE)
         return fixed
 
-    # Добавить в список исключений:
-    TABLE_HEADER_TOKENS = {
-        "ЦЕНА", "СКИДКА", "КОЛ-ВО", "ИТОГО", "НДС", "НАС",
-        "СКИДКОЙ", "СУММА", "ТОВАР", "КОЛИЧЕСТВО",
-    }
 
     def _extract_store_name(self, lines: list[str]) -> str | None:
         header = lines[:8]
@@ -75,7 +75,7 @@ class ReceiptParser:
                 continue
             upper_tokens = set(norm.upper().split())
             # Фильтруем служебные строки
-            if any(x in norm.upper() for x in ["КАССОВ", "ЧЕК", "ИНН", "ООО", "АО ", "ИП "]):
+            if re.search(r"\b(КАССОВ|ЧЕК|ИНН|ООО|АО|ИП)\b", norm.upper()):
                 continue
             # Фильтруем строки с токенами заголовка таблицы
             if upper_tokens & TABLE_HEADER_TOKENS:
@@ -87,15 +87,9 @@ class ReceiptParser:
         return self.learned.store_aliases.get(best.upper(), best)
 
 
+
     def _extract_legal_name(self, lines: list[str]) -> str | None:
-        # Сначала проверяем шапку (приоритет)
-        for line in lines[:20]:
-            for pattern in LEGAL_ENTITY_PATTERNS:
-                match = pattern.search(line)
-                if match:
-                    return match.group(0).strip()
-        # Затем хвост чека — там часто реквизиты
-        for line in lines[20:]:
+        for line in lines:
             for pattern in LEGAL_ENTITY_PATTERNS:
                 match = pattern.search(line)
                 if match:

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from app.learning.corrector import correct_text
 from app.config import ParserConfig
 from app.parser.patterns import MONEY_PATTERN
+from app.parser.patterns import OCR_CHAR_FIXES
+from app.parser.patterns import LearnedPatterns
 
 
 
@@ -17,15 +19,16 @@ class ParsedItem:
 
 
 class ItemsParser:
-    def __init__(self, config: ParserConfig) -> None:
+    def __init__(self, config: ParserConfig, learned: LearnedPatterns | None = None) -> None:
         self.config = config
+        self.learned = learned or LearnedPatterns()
     
         self.qty_price_inline = re.compile(
             r"(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})\s*[*xх4]\s*(?P<qty>\d+[.,]?\d*)\s*[=:]?\s*(?P<total>\d+[.,]\d{2})?",
             re.IGNORECASE,
         )
         self.two_line_value = re.compile(
-            r"(?P<price>\d+[.,]\d{2})\s*[*xх4]\s*(?P<qty>\d+[.,]?\d*)\s*(?P<total>\d+[.,]\d{2})?",
+            r"(?:\d+[.,]\d{2}\s+)?(?P<price>\d+[.,]\d{2})\s*[*xх4]\s*(?P<qty>\d+[.,]?\d*)\s*(?P<total>\d+[.,]\d{2})?",
             re.IGNORECASE,
         )
 
@@ -53,10 +56,7 @@ class ItemsParser:
                 continue
         
             if self._looks_like_service_line(line):
-                if self._looks_like_name(line):
-                    name_buffer.append(line)
-                    i += 1
-                    continue
+                name_buffer.clear()
                 i += 1
                 continue
             inline = self.qty_price_inline.search(line)
@@ -143,6 +143,7 @@ class ItemsParser:
         blocked = (
             "ИНН", "КАССИР", "СДАЧА", "ИТОГ", "НАЛИЧ", "ЭЛЕКТРОН", "НДС", "САЙТ",
             "ККТ", "ПРИХОД", "ПОДЫТОГ", "СКИД", "СМЕНА", "ЧЕК", "КОД",
+            "КОЛ-ВО", "СКИДКОЙ", "ЦЕНА СО", 
         )
         return any(token in upper for token in blocked)
 
@@ -153,17 +154,32 @@ class ItemsParser:
         digits_ratio = sum(ch.isdigit() for ch in text) / max(len(text), 1)
         return digits_ratio < 0.45 and any(ch.isalpha() for ch in text)
 
-    def _cleanup_name(self, name: str) -> str:
 
-        # remove product code
+    def _cleanup_name(self, name: str) -> str:
+        # 1. Убрать артикул товара
         name = re.sub(r"^\^?\d{5,}\s+", "", name)
         name = re.sub(r"^\d+[.)]?\s*", "", name)
 
-        name = re.sub(r"\s+", " ", name)
+        # 2. Применить статические OCR-замены (сначала длинные, потом короткие)
+        for wrong, correct in sorted(OCR_CHAR_FIXES.items(), key=lambda x: -len(x[0])):
+            name = name.replace(wrong, correct)
 
-        name = name.strip(" -*")
 
+        # Расшифровка аббревиатур (сначала длинные ключи)
+        name_upper = name.upper()
+        for abbr, full in sorted(self.learned.abbreviations.items(), key=lambda x: -len(x[0])):
+            name_upper_replaced = name_upper.replace(abbr.upper(), full)
+            if name_upper_replaced != name_upper:
+                name = name_upper_replaced  # берём расшифрованную версию
+                name_upper = name_upper_replaced
+
+        # 3. Применить learned corrections из словаря
         name = correct_text(name)
+
+
+        # 4. Финальная очистка
+        name = re.sub(r"\s+", " ", name)
+        name = name.strip(" -*;")
 
         return name
 
@@ -175,6 +191,7 @@ class ItemsParser:
         for item in items:
             if (
             item.name
+            and len(item.name.strip()) >= 3 
             and item.price > 0
             and item.quantity > 0
             and item.line_confidence > 0.4
@@ -186,7 +203,7 @@ class ItemsParser:
 
         try:
             from app.learning.corrector import DICTIONARY
-        except:
+        except Exception:
             return 0.0
 
         tokens = name.upper().split()

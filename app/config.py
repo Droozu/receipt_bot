@@ -16,7 +16,7 @@ CORRECTIONS_DIR = STORAGE_DIR / "corrections"
 
 @dataclass(slots=True)
 class OCRConfig:
-    engine: Literal["auto", "tesseract", "easyocr"] = "auto"
+    engine: Literal["auto", "paddleocr", "tesseract", "easyocr"] = "auto"
     languages: tuple[str, ...] = ("rus", "eng")
     min_word_confidence: float = 0.25
     psm: int = 6
