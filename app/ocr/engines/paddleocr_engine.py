@@ -1,6 +1,9 @@
-
+try:
+    from paddleocr import PaddleOCR
+except Exception:
+    PaddleOCR = None
+    
 from app.ocr.engines.engines_class import OCRResult, OCRWord
-from paddleocr import PaddleOCR
 from app.utils.utils import clean_text, apply_corrections
 from typing import Any
 from app.config import OCRConfig
@@ -10,6 +13,9 @@ from app.config import OCRConfig
 class PaddleOcrEngine:
 
     def __init__(self, config: OCRConfig, ) -> None:
+        if PaddleOCR is None:
+            raise RuntimeError("paddleocr not installed")
+
         self.config = config
 
         self.ocr = PaddleOCR(

@@ -1,8 +1,15 @@
-from pytesseract import Output, image_to_data
+try:
+    from pytesseract import Output, image_to_data
+except Exception:
+    pytesseract = None
+
 from app.ocr.engines.engines_class import OCRResult, OCRWord 
 
 class TesseractEngine:
     def __init__(self, config):
+        if pytesseract is None:
+            raise RuntimeError("pytesseract not installed")
+        
         self.config = config
 
     def recognize(self, image, metadata):

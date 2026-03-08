@@ -1,23 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 
-from app.ocr.engines.paddleocr_engine import PaddleOcrEngine
-from app.ocr.engines.tesseract_engine import TesseractEngine
-from app.ocr.engines.easyocr_engine import EasyOCREngine
 from app.ocr.engines.engines_class import OCRResult
 
 from app.config import OCRConfig
 from app.ocr.preprocess import ReceiptPreprocessor
+from app.utils.utils import try_import
 
 class OCREngine:
     def __init__(self, config: OCRConfig) -> None:
 
         self.config = config
         self.preprocessor = ReceiptPreprocessor(use_perspective_fix=config.use_perspective_fix)
-        self._backend = None
+        self._backend = []
 
     def recognize(self, file_path: str | Path) -> OCRResult:
 
@@ -29,35 +26,50 @@ class OCREngine:
         return backend(preprocessed.image, preprocessed.metadata)
 
     def _get_backend(self):
-        if self._backend is not None:
-            return self._backend
+
         if self.config.engine in {"auto", "paddleocr"}:
-            try:
-                PaddleOcr = PaddleOcrEngine(self.config)
-                self._backend = PaddleOcr.recognize
-                print("Using PaddleOCR backend")
+            print("Try to using PaddleOCR backend")
+
+            PaddleOcr = try_import(
+                "app.ocr.engines.paddleocr_engine", 
+                "PaddleOcrEngine"
+                )
+                
+            if PaddleOcr:
+                self._backend.appends = (("PaddleOcr", PaddleOcr))
                 return self._backend
-            except Exception:
-                if self.config.engine == "paddleocr":
-                    raise
+        
+
         if self.config.engine in {"auto", "tesseract"}:
-            try:
-                Tesseract = TesseractEngine(self.config)
-                self._backend = Tesseract.recognize
-                print("Using Tesseract backend")
+            print("Try to using Tesseract backend")
+
+            Tesseract = try_import(
+                    "app.ocr.engines.tesseract_engine",
+                    "TesseractEngine",
+                    )
+            
+            if Tesseract:
+                self._backend.append(("tesseract", Tesseract))
                 return self._backend
-            except Exception:
-                if self.config.engine == "tesseract":
-                    raise
-        if self.config.engine in {"auto", "easyocr"}:
-            try:
-                Easyocr = EasyOCREngine(self.config)
-                self._backend = Easyocr.recognize
-                print("Using EasyOCR backend")
+
+
+        if self.config.engine in ("auto", "easyocr"):
+            print("Try to using EasyOCR backend")
+
+            Easyocr = try_import(
+                "app.ocr.engines.easyocr_engine",
+                "EasyOCREngine",
+                )
+            if Easyocr:
+                self._backend.append(("easyocr", Easyocr))
                 return self._backend
+            
+        for name, cls in self._backend:
+            try:
+                return cls(self.config)
             except Exception:
-                if self.config.engine == "easyocr":
-                    raise
+                continue
+    
         raise RuntimeError(
             "No OCR backend available. Install pytesseract+tesseract or easyocr."
         )

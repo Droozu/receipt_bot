@@ -1,10 +1,18 @@
-import easyocr
+try:
+    import easyocr
+except Exception:
+    easyocr = None
+
 import cv2
 from app.ocr.engines.engines_class import OCRResult, OCRWord
 
 
 class EasyOCREngine:
     def __init__(self, config):
+
+        if easyocr is None:
+            raise RuntimeError("easyocr not installed")
+        
         langs = ["ru", "en"] if set(config.languages) >= {"rus", "eng"} else ["en"]
         self.reader = easyocr.Reader(langs, gpu=False)
 
