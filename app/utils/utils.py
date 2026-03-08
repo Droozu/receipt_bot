@@ -29,3 +29,10 @@ def apply_corrections(text: str) -> str:
     for wrong, right in corrections.items():
         text = re.sub(rf"\b{re.escape(wrong)}\b", right, text, flags=re.IGNORECASE)
     return text
+
+def try_import(path, cls_name):
+    try:
+        module = __import__(path, fromlist=[cls_name])
+        return getattr(module, cls_name)
+    except Exception:
+        return None
