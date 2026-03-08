@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.config import ParserConfig
-from app.ocr.engine import OCRResult
+from app.ocr.engines.engines_class import OCRResult
 from app.parser.items_parser import ItemsParser, ParsedItem
 from app.parser.patterns import DATE_PATTERNS, INN_PATTERN, LEGAL_ENTITY_PATTERNS, LearnedPatterns, TOTAL_PATTERN
 
